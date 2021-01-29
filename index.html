@@ -1,0 +1,95 @@
+<html>
+
+<head>
+  <title>FFmpeg filter-complex visualiser</title>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style type="text/css">
+    body { 
+      font-family: arial, sans-serif;
+      font-size: 14px
+    }
+    #mynetwork {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #transform {
+      width: 80%;
+      font-size: 14px
+    }
+    label {
+      display: block;
+      font-weight: bold
+    }
+  </style>
+</head>
+
+<body>
+  <form id="inputform" action="#">
+    <h1>FFmpeg filter-complex visualiser</h1>
+    <div>View the <code>-filter-complex</code> argument of an ffmpeg command as a visual graph.</div>
+    <hr>
+    <label for="transform">ffmpeg complex transform</label>
+    <textarea id="transform" rows="16">[0:a]atrim=start=0.19[s0];[s0]asetpts=PTS-STARTPTS[s1];[s1]volume=volume=1.0[s2];[s2]stereotools=mpan=-0.8161458333333333[s3];[1:a]atrim=start=0.12[s4];[s4]asetpts=PTS-STARTPTS[s5];[s5]volume=volume=1.0[s6];[s6]stereotools=mpan=-0.5442708333333333[s7];[2:a]atrim=start=0.19[s8];[s8]asetpts=PTS-STARTPTS[s9];[s9]volume=volume=1.0[s10];[s10]stereotools=mpan=-0.2723958333333333[s11];[3:a]atrim=start=0.11[s12];[s12]asetpts=PTS-STARTPTS[s13];[s13]volume=volume=1.0[s14];[s14]stereotools=mpan=-0.0005208333333333037[s15];[4:a]atrim=start=0.17[s16];[s16]asetpts=PTS-STARTPTS[s17];[s17]volume=volume=1.0[s18];[s18]stereotools=mpan=0.27135416666666656[s19];[5:a]atrim=start=0.16[s20];[s20]asetpts=PTS-STARTPTS[s21];[s21]volume=volume=1.0[s22];[s22]stereotools=mpan=0.5432291666666667[s23];[6:a]atrim=start=0.2[s24];[s24]asetpts=PTS-STARTPTS[s25];[s25]volume=volume=1.0[s26];[s26]stereotools=mpan=0.8151041666666667[s27];[s3][s7][s11][s15][s19][s23][s27]amix=inputs=7[s28];[0:v]trim=start=0.19[s29];[s29]setpts=PTS-STARTPTS[s30];[s30]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s31];[1:v]trim=start=0.12[s32];[s32]setpts=PTS-STARTPTS[s33];[s33]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s34];[2:v]trim=start=0.19[s35];[s35]setpts=PTS-STARTPTS[s36];[s36]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s37];[3:v]trim=start=0.11[s38];[s38]setpts=PTS-STARTPTS[s39];[s39]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s40];[4:v]trim=start=0.17[s41];[s41]setpts=PTS-STARTPTS[s42];[s42]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s43];[5:v]trim=start=0.16[s44];[s44]setpts=PTS-STARTPTS[s45];[s45]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s46];[6:v]trim=start=0.2[s47];[s47]setpts=PTS-STARTPTS[s48];[s48]scale=251:189:force_divisible_by=2:force_original_aspect_ratio=decrease[s49];[s31][s34][s37][s40][s43][s46][s49]xstack=fill=black:inputs=7:layout=51_0|312_0|573_0|834_0|1095_0|1356_0|1617_0[s50];[s50]pad=1920:198[s51]</textarea>
+    <br>
+    <br>
+    <input type="button" value="Render" onClick="render()">
+  </form>
+  <div id="mynetwork"></div>
+ 
+  
+  <script>
+    const render = () => {
+      console.log('render')
+      const f = document.getElementById('inputform')
+      f.style.display = 'none'
+      const element = document.getElementById('transform')
+      const fc = element.value
+      const dedupe = []
+      const nodes = []
+      const edges = []
+      const parts = fc.split(';')
+      for (var i in parts) {
+        const part = parts[i]
+        const io = part.match(/\[([^\]]+)\]/g) // get all square bracketed terms
+        const output = io[io.length - 1] // the output is the last one
+        const inputs = io.slice(0,io.length - 1) // all the rest are inputs
+        let transform = part.match(/\]([^[]+)\[/)[1] // the bit in the middle
+        transform = transform.match(/([^=]+)=/)[1]
+        for(var j in inputs) {
+          const input = inputs[j]
+          if (!dedupe.includes(input)) {
+            const node = {
+              id: input,
+              label: input
+            }
+            nodes.push(node)
+            dedupe.push(input)
+          }
+          if (!dedupe.includes(output)) {
+            const node = {
+              id: output,
+              label: output
+            }
+            nodes.push(node)
+            dedupe.push(output)
+          }
+          const edge = {
+            from: input,
+            to: output,
+            label: transform
+          }
+        edges.push(edge)
+        }
+      }
+      var container = document.getElementById('mynetwork')
+      var data = {
+        nodes: nodes,
+        edges: edges
+      };
+      var options = {}
+      var network = new vis.Network(container, data, options)
+    }
+  </script>
+</body>
+</html>
